@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adbirt</title>
+  </head>
+  <body>
+    <div>
+      <input
+        type="text"
+        name="homepage"
+        id="homepage"
+        placeholder="https://www.google.com"
+        value="https://www.google.com"
+      />
+      <button type="button">Get Selector</button>
+      <input type="text" name="selector" id="selector" />
+    </div>
+    <div id="loader">...</div>
+    <div id="iframe"></div>
+    <script>
+      const homepage = document.querySelector("#homepage");
+      const selectorBtn = document.querySelector("button");
+      const selectorInput = document.querySelector("#selector");
+      const div = document.querySelector("div#iframe");
+      const loader = document.querySelector("div#loader");
+
+      selectorBtn.addEventListener("click", async (event) => {
+        event.preventDefault();
+        try {
+          loader.innerHTML = "Loading...";
+          const html = await (
+            await fetch(
+              `https://us-central1-adbirt-e0cd0.cloudfunctions.net/ssr?url=${homepage.value}&noCacheToken=${Math.random()}`,
+              {
+                mode: 'cors'
+              }
+            )
+          ).text();
+          console.log(html);
+          loader.innerHTML = "";
+          div.innerHTML = html;
+        } catch (error) {
+          console.error(error);
+          loader.innerHTML = "";
+          alert(`Network error, unable to fetch\n ${error.message}`);
+        }
+      });
+    </script>
+  </body>
+</html>
