@@ -5,7 +5,7 @@ const setCors = (resObject: {
 }) => {
   resObject.res.setHeader('Access-Control-Allow-Origin', '*');
   resObject.res.setHeader('Access-Control-Request-Method', '*');
-  resObject.res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
+  resObject.res.setHeader('Access-Control-Allow-Methods', 'GET');
   resObject.res.setHeader('Access-Control-Allow-Headers', '*');
 }
 
