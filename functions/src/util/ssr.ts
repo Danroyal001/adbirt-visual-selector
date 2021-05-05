@@ -72,6 +72,12 @@ const ssr = async (url: string): Promise<string> => {
         return script.src && (script.src = rel_to_abs(script.src));
       });
 
+      Array.from(document.querySelectorAll('*')).forEach(el => {
+        el.addEventListener('click', event => {
+          alert(JSON.stringify(event.currentTarget));
+        })
+      });
+
       return true;
     });
 
