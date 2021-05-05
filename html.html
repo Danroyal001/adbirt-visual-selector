@@ -28,10 +28,10 @@
     <div id="adbirt-iframe"></div>
     <script>
       const homepage = document.querySelector("#adbirt-homepage");
-      const selectorBtn = document.querySelector("button#adbirt-get-selector");
+      const selectorBtn = document.querySelector("#adbirt-get-selector");
       const selectorInput = document.querySelector("#adbirt-selector");
-      const div = document.querySelector("div#adbirt-iframe");
-      const loader = document.querySelector("div#adbirt-loader");
+      const div = document.querySelector("#adbirt-iframe");
+      const loader = document.querySelector("#adbirt-loader");
 
       selectorBtn.addEventListener("click", async (event) => {
         console.log(CssSelectorGenerator.getCssSelector(event.currentTarget));
