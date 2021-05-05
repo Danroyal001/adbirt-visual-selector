@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="./js/index.js"></script>
+    <title>Adbirt</title>
+  </head>
+  <body>
+    <div>
+      <input
+        type="text"
+        name="adbirt-homepage"
+        id="adbirt-homepage"
+        placeholder="typr the url here"
+        value="http://34.90.27.96/about/"
+      />
+      <button type="button" id="adbirt-get-selector">Get Selector</button>
+      <input
+        type="text"
+        name="adbirt-selector"
+        id="adbirt-selector"
+        placeholder="Selector will show here"
+      />
+    </div>
+    <div id="adbirt-loader">...</div>
+    <div id="adbirt-iframe"></div>
+    <script>
+      const homepage = document.querySelector("#adbirt-homepage");
+      const selectorBtn = document.querySelector("button#adbirt-get-selector");
+      const selectorInput = document.querySelector("#adbirt-selector");
+      const div = document.querySelector("div#adbirt-iframe");
+      const loader = document.querySelector("div#adbirt-loader");
+
+      selectorBtn.addEventListener("click", async (event) => {
+        console.log(CssSelectorGenerator.getCssSelector(event.currentTarget));
+        event.preventDefault();
+        try {
+          loader.innerHTML = "Rendering, please wait...";
+
+          if (
+            homepage.value.indexOf("https://") != 0 &&
+            homepage.value.indexOf("http://") != 0
+          ) {
+            homepage.value = "https://" + homepage.value;
+          }
+
+          const html = await (
+            await fetch(
+              /* `https://us-central1-adbirt-e0cd0.cloudfunctions.net/ssr?url=${encodeURIComponent(
+                homepage.value
+              )}&noCacheToken=${Math.random()}`, */
+              `http://localhost:5001/adbirt-e0cd0/us-central1/ssr?url=${
+                encodeURIComponent(homepage.value)
+              }&noCacheToken=${Math.random()}`,
+              {
+                mode: "cors",
+              }
+            )
+          ).text();
+          console.log(encodeURIComponent(homepage.value))
+          loader.innerHTML = "";
+          div.innerHTML = "";
+
+          const win = window.open(
+            "",
+            "Adbirt - Click on the element you want us to track",
+            "width=2000,height=2000,scrollbars=1,center=1"
+          );
+
+          win.alert("Wait for the page to load, then click on the element");
+
+          win.document.querySelector("html").innerHTML = html;
+          const script = win.document.createElement("script");
+          win.document.body.appendChild(script);
+          script.src = "./js/index.js";
+          Array.from(win.document.getElementsByTagName("*")).forEach((el) => {
+            el.addEventListener("click", (event) => {
+              event.preventDefault();
+              const selectorStr = CssSelectorGenerator.getCssSelector(
+                event.target
+              );
+              console.log(selectorStr);
+              selectorInput.value = selectorStr.toString();
+
+              return win.close();
+            });
+          });
+
+          window.focus();
+          window.document.body.style.cursor = "pointer !important";
+        } catch (error) {
+          console.error(error);
+          loader.innerHTML = "";
+          alert(`Network error, unable to fetch\n ${error.message}`);
+        }
+      });
+    </script>
+  </body>
+</html>
