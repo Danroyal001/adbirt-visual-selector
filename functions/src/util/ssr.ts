@@ -6,56 +6,73 @@ const ssr = async (url: string): Promise<string> => {
 
     const tab = await browser.newPage();
 
+    await tab.setViewport({
+      width: 2000,
+      height: 1000
+    });
+
     await tab.goto(url, { waitUntill: "domcontentloaded" } as any);
 
-    await tab.evaluate(() => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
+    await tab.evaluate(() => {
       const rel_to_abs = (url: string) => {
         /* Only accept commonly trusted protocols:
          * Only data-image URLs are accepted, Exotic flavours (escaped slash,
          * html-entitied characters) are not supported to keep the function fast */
-      if(/^(https?|file|ftps?|mailto|javascript|data:image\/[^;]{2,9};):/i.test(url))
-             return url; //Url is already absolute
-    
+        if (
+          /^(https?|file|ftps?|mailto|javascript|data:image\/[^;]{2,9};):/i.test(
+            url
+          )
+        )
+          return url; //Url is already absolute
+
         var base_url = `${location.href.match(/^(.+)\/?(?:#.+)?$/)!![0]}/`;
-        if(url.substring(0,2) == "//")
-            return location.protocol + url;
-        else if(url.charAt(0) == "/")
-            return location.protocol + "//" + location.host + url;
-        else if(url.substring(0,2) == "./")
-            url = "." + url;
-        else if(/^\s*$/.test(url))
-            return ""; //Empty = Return nothing
+        if (url.substring(0, 2) == "//") return location.protocol + url;
+        else if (url.charAt(0) == "/")
+          return location.protocol + "//" + location.host + url;
+        else if (url.substring(0, 2) == "./") url = "." + url;
+        else if (/^\s*$/.test(url)) return "";
+        //Empty = Return nothing
         else url = "../" + url;
-    
+
         url = base_url + url;
         //var i=0
-        while(/\/\.\.\//.test(url = url.replace(/[^\/]+\/+\.\.\//g,"")));
-    
+        while (/\/\.\.\//.test((url = url.replace(/[^\/]+\/+\.\.\//g, ""))));
+
         /* Escape certain characters to prevent XSS */
-        url = url.replace(/\.$/,"").replace(/\/\./g,"").replace(/"/g,"%22")
-                .replace(/'/g,"%27").replace(/</g,"%3C").replace(/>/g,"%3E");
+        url = url
+          .replace(/\.$/, "")
+          .replace(/\/\./g, "")
+          .replace(/"/g, "%22")
+          .replace(/'/g, "%27")
+          .replace(/</g, "%3C")
+          .replace(/>/g, "%3E");
+
         return url;
-    }
+      };
 
       Array.from(document.querySelectorAll("a")).forEach((a) => {
-        a.href = rel_to_abs(a.href);
+        return a.href && (a.href = rel_to_abs(a.href));
       });
 
       Array.from(document.querySelectorAll("link")).forEach((link) => {
-        link.setAttribute('href', rel_to_abs(link.getAttribute('href')!!))
+        return (
+          link.getAttribute("href") &&
+          link.setAttribute("href", rel_to_abs(link.getAttribute("href")!!))
+        );
       });
 
       Array.from(document.querySelectorAll("img")).forEach((img) => {
-        img.src = rel_to_abs(img.src)
+        img.srcset && (img.srcset = rel_to_abs(img.srcset));
+        return img.src && (img.src = rel_to_abs(img.src));
       });
 
       Array.from(document.querySelectorAll("script")).forEach((script) => {
-        script.src = rel_to_abs(script.src)
+        return script.src && (script.src = rel_to_abs(script.src));
       });
 
       return true;
-
     });
 
     const html = await tab.content();

@@ -7,8 +7,6 @@ export const ssr = functions.https.onRequest(async (req, res) => {
 
   const html = await _ssr(url);
 
-  console.log(html);
-
   setCors({res});
 
   res.status(200).type('text/html').send(html);
