@@ -1,4 +1,4 @@
-import launchHeadlessBrowser from "./launchHeadlessBrowser";
+import launchHeadlessBrowser from './launchHeadlessBrowser';
 
 const ssr = async (url: string): Promise<string> => {
   try {
@@ -8,7 +8,7 @@ const ssr = async (url: string): Promise<string> => {
 
     await tab.setViewport({
       width: 2000,
-      height: 1000
+      height: 1000,
     });
 
     await tab.goto(url, { waitUntill: "domcontentloaded" } as any);
@@ -21,7 +21,7 @@ const ssr = async (url: string): Promise<string> => {
          * Only data-image URLs are accepted, Exotic flavours (escaped slash,
          * html-entitied characters) are not supported to keep the function fast */
         if (
-          /^(https?|file|ftps?|mailto|javascript|data:image\/[^;]{2,9};):/i.test(
+          /^(https?|file|s?ftps?|mailto|javascript|data:image\/[^;]{2,9};):/i.test(
             url
           )
         )
@@ -70,12 +70,6 @@ const ssr = async (url: string): Promise<string> => {
 
       Array.from(document.querySelectorAll("script")).forEach((script) => {
         return script.src && (script.src = rel_to_abs(script.src));
-      });
-
-      Array.from(document.querySelectorAll('*')).forEach(el => {
-        el.addEventListener('click', event => {
-          alert(JSON.stringify(event.currentTarget));
-        })
       });
 
       return true;
