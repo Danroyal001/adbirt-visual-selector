@@ -123,18 +123,273 @@ $('#formselectid').on('change', function() {
                             </div>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <label class="formLabel" id="adbirt-get-selector">Success element selector</label>
+                                    <label class="formLabel" >Success element selector</label>
                                 </div>
                                 <div class="col-md-6">
-                                    <input type="text"  name="campaign_success_url" required placeholder="e.g https://my-site.com/advert" class="form-control" id="adbirt-selector" title="selector" >
+                                    <input type="text"  name="campaign_success_url" required placeholder="e.g button#ignup-button" class="form-control" id="adbirt-selector" title="selector" >
                                     <br />
-                                    <span id="adbirt-loader">...</span>
+                                    <span id="adbirt-loader" class="bg-primary text-white p-2"></span>
                                 </div>
                                 <div class="col-md-2">
                                     <button type="button" class="btn btn-primiary btn-small" id="adbirt-get-selector" title="get selector" >Get Selector</button>
                                 </div>
                                 
                                 {!! Html::script('dist/js/css-selector-generator.js') !!} 
+
+                                <script>
+                                (() => {
+    const successpage = document.querySelector("#campaign_success_url");
+    const selectorBtn = document.querySelector("#adbirt-get-selector");
+    const selectorInput = document.querySelector("#adbirt-selector");
+    const loader = document.querySelector("#adbirt-loader");
+
+    selectorBtn.onclick = async (event) => {
+        event.preventDefault();
+
+        try {
+            loader.innerHTML = "Rendering, please wait...";
+
+            if (
+                successpage.value.indexOf("https://") != 0 &&
+                successpage.value.indexOf("http://") != 0
+            ) {
+                successpage.value = "https://" + successpage.value;
+            }
+
+            const html = await (
+                await fetch(
+                     `https://us-central1-adbirt-e0cd0.cloudfunctions.net/ssr?url=${encodeURIComponent(
+                      successpage.value
+                    )}&noCacheToken=${Math.random()}`, 
+                    /*`http://localhost:5001/adbirt-e0cd0/us-central1/ssr?url=${
+        encodeURIComponent(successpage.value)
+      }&noCacheToken=${Math.random()}`,*/ {
+                        mode: "cors",
+                    }
+                )
+            ).text();
+            console.log(encodeURIComponent(successpage.value))
+            loader.innerHTML = "";
+
+            const win = window.open(
+                "",
+                "Adbirt - Click on the element you want us to track"
+            );
+
+            win.alert("Please wait for the page to load, then double-click on an element to get it's selector");
+
+            win.document.querySelector("html").innerHTML = html;
+            const script = win.document.createElement("script");
+            win.document.body.appendChild(script);
+            script.src = "./js/index.js";
+
+            const handleGetSelector = () => Array.from(win.document.getElementsByTagName("*")).forEach((el) => {
+                el.addEventListener("dblclick", (event) => {
+                    event.preventDefault();
+                    const selectorStr = CssSelectorGenerator.getCssSelector(
+                        event.target,
+                        {
+                            blacklist: ['[href]'],
+                        }
+                        
+                    );
+                    selectorInput.value = selectorStr.toString();
+
+                    return win.close();
+                });
+            });
+
+            handleGetSelector();
+
+            // handle forms
+            /*const handleForms = () => Array.from(win.document.querySelectorAll('[type=submit]')).forEach(btn => {
+                if (btn) {
+                    if (btn.form) {
+                        const form = btn.form;
+                        const method = form.method || 'GET';
+                        const action = form.action;
+                        const enctype = form.enctype;
+
+                        let params = {};
+
+                        const fields = [...Array.from(form.querySelectorAll('input')), ...Array.from(form.querySelectorAll('textarea')), ...Array.from(form.querySelectorAll('select'))];
+
+                        fields.forEach((field) => {
+                            if (field.name && field.value) {
+                                params[`${field.name}`] = field.value;
+                            }
+                        });
+
+                        const keys = Object.keys(params);
+                        const values = Object.values(params);
+                        const action = form.action;
+
+                        let final;
+
+                        if (enctype == 'application/x-www-form-urlencoded') {
+                                const urlParams = new URLSearchParams();
+                                keys.forEach((key, index) => {
+                                    urlParams.append(key, encodeURIComponent(value[index]));
+                                });
+                                final = urlParams;
+                            } else if (enctype == 'multipart/formdata') {
+                                const formData = new FormData();
+                                keys.forEach((key, index) => {
+                                    formData.append(key, value[index]);
+                                });
+                                final = formData;
+                            } else if (enctype == 'applicatin.json') {
+                                final = JSON.stringify(params);
+                            }
+
+                            let url;
+
+                            if (method.toLowerCase() = 'get') {
+                                const u = new URL(action)
+                                u.searchParams = params;
+                                url = u.toString()
+                            }
+
+                            fetch(url).then(async res => {
+                                const html = await res.text();
+                                win.document.querySelector('html').innerHTML = html;
+                            }).catch(console.error.bind(console));
+
+                    }
+                }
+            })*/
+
+            //handleForms();
+
+            const handleLinkClicks = () => Array.from(win.document.getElementsByTagName("a")).forEach((el) => {
+
+                const run = async (event) => {
+                    event.preventDefault();
+
+                    console.log(event);
+
+                    // show loader
+                    const loaderHtml = `<div id="adbirt-loader">
+        <style lang="css">
+          #adbirt-loader-backscrim {
+            display: none;
+            width: 100% !important;
+            height: 100% !important;
+            padding: 0px !important;
+            margin: 0px !important;
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            z-index: 999999999;
+            display: flex !important;
+            background-color: #000000a9;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-direction: column !important;
+          }
+
+          #adbirt-loader {
+            width: 300px !important;
+            height: 100px !important;
+            background-color: #fff !important;
+            box-shadow: 0px 1px 4px 8px;
+            border-radius: 5px;
+            overflow: hidden !important;
+          }
+
+          #adbirt-loader-spinner-holder {
+            float: left !important;
+          }
+
+          #adbirt-loader-spinner {
+            border-radius: 50px !important;
+            width: 50px !important;
+            height: 50px !important;
+            aspect-ratio: 1;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 5px solid #2196F3;
+            border-right: 5px solid #0f0;
+            animation-name: spin;
+            animation-iteration-count: infinite;
+            animation-delay: 0s;
+            animation-duration: 1s;
+          }
+
+          @keyframes spin {
+            0% {
+              transform: rotate(0deg);
+            }
+
+            100% {
+              transform: rotate(360deg);
+            }
+          }
+
+          #adbirt-loader-text-holder {
+            float: left !important;
+          }
+
+          #adbirt-loader-text {
+            font-weight: 900;
+            color: #2196F3;
+          }
+        </style>
+        <div>Adbirt.com</div>
+        <center id="adbirt-loader-spiner-holder">
+          <div id="adbirt-loader-spinner">&nbsp;</div>
+        </center>
+        <center id="adbirt-loader-text-holder">
+          <span id="adbirt-loader-text">Rendering, please wait...</span>
+        </center>
+      </div>`;
+
+                    win.loader = win.document.createElement('div');
+                    win.document.body.appendChild(win.loader);
+                    win.loader.setAttribute('id', 'adbirt-loader-backscrim');
+                    win.loader.innerHTML = loaderHtml;
+                    setTimeout(() => {win.loader.tyle.display = 'block'}, 1000);
+
+                    try {
+
+                        const html = await (await fetch(`https://us-central1-adbirt-e0cd0.cloudfunctions.net/ssr?url=${encodeURIComponent(
+                      el.href
+                    )}&noCacheToken=${Math.random()}`,{mode: 'cors'})).text();
+
+                    win.document.querySelector('html').innerHTML = html;
+
+                    // hide loader
+                    win.loader.remove();
+
+                    return setTimeout(() => {
+                        handleGetSelector();
+                        //handleForms();
+                        handleLinkClicks();
+                    }, 1500)
+
+                    } catch (error) {
+                        console.error(error);
+                        win.loader.remove();
+                    }
+                };
+
+                el.href && el.addEventListener("click", run);
+                
+                return false;
+            });
+
+            handleLinkClicks();
+
+            window.focus();
+            window.document.body.style.cursor = "pointer";
+        } catch (error) {
+            console.error(error);
+            loader.innerHTML = "";
+            alert(`Network error, unable to render\n ${error.message}`);
+        }
+    };
+})();
+                                </script>
 
                             </div>
                         </div>
